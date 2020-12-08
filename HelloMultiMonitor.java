@@ -20,51 +20,57 @@ restore snapshot:
 */
 
 public class HelloMultiMonitor {
-	static double d  = Math.random();
+	static double d = Math.random();
 
-	static void snapshot() {}
+	static void snapshot() {
+	}
 
 	public static Object monitor = new Object();
 	public static Object waitForStart = new Object();
 
-	public static void main(String args[]) throws Throwable  {
+	public static void main(String args[]) throws Throwable {
 		/* initialize vm */
-    System.out.print("Do bunch of init .");
+		System.out.print("Do bunch of init .");
 		Thread.sleep(1500);
 		System.out.print(" .");
-                Thread.sleep(1500);
+		Thread.sleep(1500);
 		System.out.print(" .");
-                Thread.sleep(1500);
+		Thread.sleep(1500);
 		System.out.print(" .");
-                Thread.sleep(1500);
+		Thread.sleep(1500);
 		System.out.println("\n finished init");
 
 		/**
-		 * Force object monitor to inflate. A flat object monitor can support a
-		 * single thread waiting to acquire the monitor.
-		 * The monitor must inflate to support 2.
+		 * Force object monitor to inflate. A flat object monitor can support a single
+		 * thread waiting to acquire the monitor. The monitor must inflate to support 2.
 		 */
-		 InflationThread iThread1 = new InflationThread();
-		 InflationThread iThread2 = new InflationThread();
+		InflationThread iThread1 = new InflationThread();
+		InflationThread iThread2 = new InflationThread();
 		iThread1.start();
 		iThread2.start();
 
-		/* wait for all threads to be done and monitor to be inflated before continuing to snapshot. */
+		/*
+		 * wait for all threads to be done and monitor to be inflated before continuing
+		 * to snapshot.
+		 */
 		iThread1.join();
 		iThread2.join();
 
-    /* Snapshot while additional SnapshotThread is running and inflated object monitor is acquired. */
-		synchronized(monitor) {
+		/*
+		 * Snapshot while additional SnapshotThread is running and inflated object
+		 * monitor is acquired.
+		 */
+		synchronized (monitor) {
 			System.out.println("start snapshot\n");
 			SnapshotThread snapshotThread = new SnapshotThread();
 			snapshotThread.start();
 
 			/* don't snapshot until SnapshotThread notifies it is running. */
-			synchronized(waitForStart) {
+			synchronized (waitForStart) {
 				waitForStart.wait();
 			}
 
-			snapshot();//<--- snapshot here
+			snapshot();// <--- snapshot here
 		}
 
 		System.out.println("Starting receiving requests");
@@ -75,10 +81,10 @@ public class HelloMultiMonitor {
 class InflationThread extends Thread {
 	public void run() {
 		try {
-			synchronized(HelloMultiMonitor.monitor) {
+			synchronized (HelloMultiMonitor.monitor) {
 				Thread.sleep(500);
 			}
-		} catch(Throwable e) {
+		} catch (Throwable e) {
 			e.printStackTrace();
 		}
 	}
@@ -87,26 +93,27 @@ class InflationThread extends Thread {
 class SnapshotThread extends Thread {
 	public void run() {
 		try {
-				for (int i = 0; i < 5; i++) {
-					System.out.println("Snapshot second thread start " + i + "\n");
-					Thread.sleep(1500);
-				}
-				/* notify main that thread has started. */
-				synchronized(HelloMultiMonitor.waitForStart) {
-					HelloMultiMonitor.waitForStart.notify();
-				}
-
+			for (int i = 0; i < 5; i++) {
+				System.out.println("Snapshot second thread start " + i + "\n");
 				Thread.sleep(1500);
+			}
+			/* notify main that thread has started. */
+			synchronized (HelloMultiMonitor.waitForStart) {
+				HelloMultiMonitor.waitForStart.notify();
+			}
 
-				/* force a TLH refresh to prevent random seg faults
-				 * in non-main thread */
-				System.out.println("Snapshot second thread force TLH refresh");
-				for (int i = 0; i < 100; i++) {
-					Object newobject = new Object();
-				}
+			Thread.sleep(1500);
 
-				System.out.println("Snapshot second thread continue ");
-		} catch(Throwable e) {
+			/*
+			 * force a TLH refresh to prevent random seg faults in non-main thread
+			 */
+			System.out.println("Snapshot second thread force TLH refresh");
+			for (int i = 0; i < 100; i++) {
+				Object newobject = new Object();
+			}
+
+			System.out.println("Snapshot second thread continue ");
+		} catch (Throwable e) {
 			e.printStackTrace();
 		}
 	}
