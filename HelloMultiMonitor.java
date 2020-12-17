@@ -102,10 +102,8 @@ class SnapshotThread extends Thread {
 				HelloMultiMonitor.waitForStart.notify();
 			}
 
-			Thread.sleep(1500);
-
 			/*
-			 * force a TLH refresh to prevent random seg faults in non-main thread
+			 * force a TLH refresh to prevent interpreter seg faults in non-main thread
 			 */
 			System.out.println("Snapshot second thread force TLH refresh");
 			for (int i = 0; i < 100; i++) {
