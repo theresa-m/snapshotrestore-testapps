@@ -112,16 +112,6 @@ class SnapshotThread extends Thread {
 				System.out.println("waiting on monitor");
 			}
 
-			Thread.sleep(1500);
-
-			/*
-			 * force a TLH refresh to prevent interpreter seg faults in non-main thread
-			 */
-			System.out.println("Snapshot second thread force TLH refresh");
-			for (int i = 0; i < 100; i++) {
-				Object newobject = new Object();
-			}
-
 			System.out.println("Snapshot second thread continue ");
 		} catch (Throwable e) {
 			e.printStackTrace();
